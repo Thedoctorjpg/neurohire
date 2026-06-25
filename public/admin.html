@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroHire — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="max-w-6xl mx-auto p-6">
+    <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900"><i class="fas fa-lock text-blue-600 mr-2"></i>Admin dashboard</h1>
+        <p class="text-gray-600 text-sm">View submitted reports (requires admin token)</p>
+      </div>
+      <a href="/" class="text-blue-600 hover:underline text-sm">← Public form</a>
+    </header>
+
+    <section id="login-panel" class="bg-white rounded-2xl shadow p-6 border max-w-lg">
+      <label for="token" class="block text-sm font-medium mb-2">Admin token</label>
+      <input type="password" id="token" class="w-full px-4 py-3 border rounded-lg mb-4" placeholder="Bearer token from ADMIN_TOKEN">
+      <button id="login-btn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700">Load reports</button>
+      <p id="login-error" class="hidden text-red-600 text-sm mt-3"></p>
+    </section>
+
+    <section id="reports-panel" class="hidden mt-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <p id="report-count" class="text-sm text-gray-600"></p>
+        <button id="logout-btn" class="text-sm text-gray-500 hover:text-gray-800">Clear token</button>
+      </div>
+      <div id="reports-list" class="space-y-4"></div>
+    </section>
+  </div>
+
+  <script>
+    const TOKEN_KEY = 'neurohire_admin_token';
+
+    function getToken() {
+      return document.getElementById('token').value.trim() || localStorage.getItem(TOKEN_KEY) || '';
+    }
+
+    function formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleString('en-NZ');
+      } catch {
+        return iso;
+      }
+    }
+
+    function renderReport(report) {
+      const card = document.createElement('article');
+      card.className = 'bg-white rounded-2xl shadow border p-5';
+      card.innerHTML = `
+        <div class="flex flex-wrap justify-between gap-2 mb-3">
+          <h2 class="font-semibold text-lg">${report.jobTitle}</h2>
+          <span class="text-xs text-gray-500 font-mono">${report.id}</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">${formatDate(report.createdAt)} · ${report.stage}${report.company ? ` · ${report.company}` : ''}</p>
+        <dl class="grid sm:grid-cols-2 gap-3 text-sm">
+          <div><dt class="font-medium text-gray-700">Description</dt><dd class="text-gray-600 mt-1 whitespace-pre-wrap">${report.description}</dd></div>
+          <div><dt class="font-medium text-gray-700">Issue types</dt><dd class="text-gray-600 mt-1">${(report.issueTypes || []).join(', ') || '—'}</dd></div>
+          <div><dt class="font-medium text-gray-700">Impacts</dt><dd class="text-gray-600 mt-1">${(report.impacts || []).join(', ') || '—'}</dd></div>
+          <div><dt class="font-medium text-gray-700">Accommodations</dt><dd class="text-gray-600 mt-1 whitespace-pre-wrap">${report.accommodations || '—'}</dd></div>
+          <div><dt class="font-medium text-gray-700">Support requested</dt><dd class="text-gray-600 mt-1">${report.supportRequested}</dd></div>
+          <div><dt class="font-medium text-gray-700">Contact</dt><dd class="text-gray-600 mt-1">${report.contactEmail || 'Anonymous'}</dd></div>
+        </dl>
+      `;
+      return card;
+    }
+
+    async function loadReports() {
+      const token = getToken();
+      const loginError = document.getElementById('login-error');
+      loginError.classList.add('hidden');
+      if (!token) {
+        loginError.textContent = 'Enter an admin token.';
+        loginError.classList.remove('hidden');
+        return;
+      }
+
+      const res = await fetch('/api/admin/reports?limit=200', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        loginError.textContent = data.error || 'Failed to load reports';
+        loginError.classList.remove('hidden');
+        return;
+      }
+
+      localStorage.setItem(TOKEN_KEY, token);
+      document.getElementById('login-panel').classList.add('hidden');
+      document.getElementById('reports-panel').classList.remove('hidden');
+      document.getElementById('report-count').textContent = `${data.total} report(s)`;
+
+      const list = document.getElementById('reports-list');
+      list.innerHTML = '';
+      if (!data.reports.length) {
+        list.innerHTML = '<p class="text-gray-500">No reports yet.</p>';
+        return;
+      }
+      for (const report of data.reports) {
+        list.appendChild(renderReport(report));
+      }
+    }
+
+    document.getElementById('login-btn').addEventListener('click', loadReports);
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem(TOKEN_KEY);
+      document.getElementById('token').value = '';
+      document.getElementById('reports-panel').classList.add('hidden');
+      document.getElementById('login-panel').classList.remove('hidden');
+    });
+
+    const saved = localStorage.getItem(TOKEN_KEY);
+    if (saved) {
+      document.getElementById('token').value = saved;
+      loadReports();
+    }
+  </script>
+</body>
+</html>

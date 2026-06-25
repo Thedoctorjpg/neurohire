@@ -2,96 +2,126 @@
 
 Safe, anonymous reporting for neurodiverse and disabled jobseekers in New Zealand.
 
-NeuroHire is a single-page HTML form that lets people document inaccessible or discriminatory hiring experiences — at application, assessment, interview, or offer stage — without requiring an account or exposing personal details unless they choose to.
+Full-stack Node.js app: Express API, SQLite database, multi-step reporting UI, public aggregate stats, and password-protected admin dashboard.
 
-## Live demo
+## Stack
 
-After enabling GitHub Pages on this repo, the form is available at:
-
-**https://thedoctorjpg.github.io/neurohire/**
-
-## Features
-
-- **Four-step flow** — Opportunity → What happened → Impact → Review & submit
-- **Anonymous by default** — contact email is optional
-- **Mobile-friendly** — responsive layout with Tailwind CSS
-- **No backend required** — submissions via [Formspree](https://formspree.io)
-- **Static hosting** — one `index.html` file; works on GitHub Pages, Netlify, or any static host
+| Layer | Tech |
+|-------|------|
+| **Frontend** | HTML, Tailwind CSS, vanilla JS |
+| **Backend** | Node.js, Express |
+| **Database** | SQLite (Node built-in `node:sqlite`, Node ≥22.5) |
+| **Auth** | Bearer token for admin API (`ADMIN_TOKEN`) |
 
 ## Quick start
-
-### 1. Clone the repo
 
 ```bash
 git clone https://github.com/Thedoctorjpg/neurohire.git
 cd neurohire
+npm install
+cp .env.example .env
+# Edit .env — set ADMIN_TOKEN to a long random string
+npm start
 ```
 
-### 2. Configure Formspree
+Open **http://localhost:3853**
 
-1. Create a free form at [formspree.io](https://formspree.io).
-2. Open `index.html` and replace the placeholder in the form `action`:
+| Page | URL |
+|------|-----|
+| Report form | `/` |
+| Public stats | `/stats.html` |
+| Admin dashboard | `/admin.html` |
 
-```html
-action="https://formspree.io/f/YOUR_FORM_ID"
-```
-
-Use your real Formspree form ID (e.g. `https://formspree.io/f/xyzabcde`).
-
-### 3. Run locally
-
-Open `index.html` in a browser, or serve the folder:
+Dev mode with auto-restart (Node 18+):
 
 ```bash
-# Python 3
-python -m http.server 8080
+npm run dev
 ```
 
-Then visit `http://localhost:8080`.
+## API
 
-### 4. Deploy
+### `GET /api/health`
 
-**GitHub Pages**
+Health check.
 
-1. Push this repo to GitHub.
-2. Go to **Settings → Pages**.
-3. Source: **Deploy from branch** → `main` → `/ (root)`.
-4. Save. The site will be live at `https://<username>.github.io/neurohire/`.
+### `GET /api/stats`
 
-**Other hosts**
+Public aggregate stats (no PII): totals, counts by stage, issue type, and impact.
 
-Upload `index.html` to Netlify, Cloudflare Pages, or any static file host.
+### `POST /api/reports`
 
-## Form fields
+Submit a report. Rate-limited to 10 requests per 15 minutes per IP.
 
-| Step | Fields |
-|------|--------|
-| **1. Opportunity** | Company (optional), job title, hiring stage, date |
-| **2. What happened** | Issue types, description, accommodation requests |
-| **3. Impact** | Effects on wellbeing/opportunity, notes, support preference |
-| **4. Submit** | Review summary, optional email, consent, submit |
+```json
+{
+  "company": "Optional Co",
+  "jobTitle": "Software Engineer",
+  "stage": "Interview",
+  "incidentDate": "2026-05-01",
+  "issueTypes": ["Accommodation request ignored or refused"],
+  "description": "What happened…",
+  "accommodations": "Requested extra time…",
+  "impacts": ["Increased anxiety or distress"],
+  "impactNotes": "Optional",
+  "supportRequested": "No",
+  "contactEmail": null,
+  "consent": true
+}
+```
 
-Submissions are sent to your Formspree inbox. Configure Formspree notifications and spam filtering in the Formspree dashboard.
+Valid `stage` values: `Application form`, `Online assessment`, `Interview`, `Reference check`, `Job offer stage`, `Other`.
 
-## Privacy
+### `GET /api/admin/reports`
 
-- Reports are anonymous unless the user enters a contact email.
-- No cookies or analytics are built into this form.
-- Third-party resources loaded: Tailwind CSS CDN, Font Awesome CDN, Formspree (on submit only).
-- Operators are responsible for how submitted data is stored, used, and disclosed under applicable law (e.g. NZ Privacy Act 2020).
+List all reports. Requires header:
+
+```
+Authorization: Bearer <ADMIN_TOKEN>
+```
+
+Query params: `limit` (max 500), `offset`.
+
+## Environment
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3853` | HTTP port |
+| `ADMIN_TOKEN` | *(empty)* | Enables admin API; required for `/admin.html` |
 
 ## Project structure
 
 ```
 neurohire/
-├── index.html   # Complete single-file form
-├── README.md
-└── LICENSE
+├── server.js          # Express app & API routes
+├── db.js              # SQLite schema & queries
+├── public/
+│   ├── index.html     # 4-step report form
+│   ├── app.js         # Form logic
+│   ├── stats.html     # Public aggregate dashboard
+│   └── admin.html     # Admin report viewer
+├── data/              # SQLite DB (created at runtime, gitignored)
+├── package.json
+├── .env.example
+├── LICENSE
+└── README.md
 ```
 
-## Contributing
+## Privacy
 
-Issues and pull requests are welcome. Please keep the form accessible, privacy-preserving, and suitable for static hosting.
+- Reports are anonymous unless the user provides a contact email.
+- Public stats expose only aggregated counts — no descriptions or identifying details.
+- Admin access requires `ADMIN_TOKEN`; keep it secret and use HTTPS in production.
+- Operators are responsible for storage, retention, and disclosure under applicable law (e.g. NZ Privacy Act 2020).
+
+## Deployment
+
+Run on any Node host (Railway, Render, Fly.io, VPS):
+
+1. Set `PORT` and `ADMIN_TOKEN` in the host environment.
+2. `npm install && npm start`
+3. Put HTTPS in front (reverse proxy or platform TLS).
+
+GitHub Pages **cannot** run this stack — it only serves static files. Use a Node host for the full app.
 
 ## Author
 
@@ -99,4 +129,4 @@ Issues and pull requests are welcome. Please keep the form accessible, privacy-p
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

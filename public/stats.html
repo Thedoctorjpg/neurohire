@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroHire — Public stats</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto p-6">
+    <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <i class="fas fa-chart-column text-blue-600" aria-hidden="true"></i> Public stats
+        </h1>
+        <p class="text-gray-600 mt-1">Aggregated, anonymised reporting data</p>
+      </div>
+      <a href="/" class="text-blue-600 hover:underline">← Submit a report</a>
+    </header>
+
+    <div id="loading" class="text-gray-500">Loading stats…</div>
+    <div id="content" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow p-6 border">
+        <p class="text-sm text-gray-500">Total reports</p>
+        <p id="total" class="text-4xl font-bold text-blue-600 mt-1">0</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <section class="bg-white rounded-2xl shadow p-6 border">
+          <h2 class="font-semibold text-lg mb-4">By hiring stage</h2>
+          <ul id="by-stage" class="space-y-2 text-sm"></ul>
+        </section>
+        <section class="bg-white rounded-2xl shadow p-6 border">
+          <h2 class="font-semibold text-lg mb-4">Common issue types</h2>
+          <ul id="by-issue" class="space-y-2 text-sm"></ul>
+        </section>
+      </div>
+
+      <section class="bg-white rounded-2xl shadow p-6 border">
+        <h2 class="font-semibold text-lg mb-4">Reported impacts</h2>
+        <ul id="by-impact" class="space-y-2 text-sm"></ul>
+      </section>
+    </div>
+    <p id="error" class="hidden text-red-600"></p>
+  </div>
+
+  <script>
+    function renderList(el, items, emptyText) {
+      if (!items.length) {
+        el.innerHTML = `<li class="text-gray-400">${emptyText}</li>`;
+        return;
+      }
+      el.innerHTML = items.map((item) =>
+        `<li class="flex justify-between gap-4 border-b border-gray-100 py-2"><span>${item.label}</span><span class="font-semibold text-gray-700">${item.count}</span></li>`
+      ).join('');
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/stats');
+        if (!res.ok) throw new Error('Failed to load stats');
+        const data = await res.json();
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
+        document.getElementById('total').textContent = data.totalReports;
+        renderList(document.getElementById('by-stage'), data.byStage, 'No data yet');
+        renderList(document.getElementById('by-issue'), data.byIssueType, 'No data yet');
+        renderList(document.getElementById('by-impact'), data.byImpact, 'No data yet');
+      } catch (err) {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('error').textContent = err.message;
+        document.getElementById('error').classList.remove('hidden');
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>
