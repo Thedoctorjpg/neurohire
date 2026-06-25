@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: neurohire
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: PORT
+        value: 3853
+    disk:
+      name: neurohire-data
+      mountPath: /var/data
+      sizeGB: 1

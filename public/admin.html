@@ -12,9 +12,12 @@
     <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-gray-900"><i class="fas fa-lock text-blue-600 mr-2"></i>Admin dashboard</h1>
-        <p class="text-gray-600 text-sm">View submitted reports (requires admin token)</p>
+        <p class="text-gray-600 text-sm">View, search, and export submitted reports</p>
       </div>
-      <a href="/" class="text-blue-600 hover:underline text-sm">← Public form</a>
+      <div class="flex gap-4 text-sm">
+        <a href="/stats.html" class="text-blue-600 hover:underline">Public stats</a>
+        <a href="/" class="text-blue-600 hover:underline">← Public form</a>
+      </div>
     </header>
 
     <section id="login-panel" class="bg-white rounded-2xl shadow p-6 border max-w-lg">
@@ -25,10 +28,31 @@
     </section>
 
     <section id="reports-panel" class="hidden mt-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <p id="report-count" class="text-sm text-gray-600"></p>
-        <button id="logout-btn" class="text-sm text-gray-500 hover:text-gray-800">Clear token</button>
+      <div class="bg-white rounded-2xl shadow border p-4 flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[180px]">
+          <label for="filter-q" class="block text-xs font-medium text-gray-600 mb-1">Search</label>
+          <input id="filter-q" type="search" placeholder="Job title, company, description…" class="w-full px-3 py-2 border rounded-lg text-sm">
+        </div>
+        <div class="min-w-[160px]">
+          <label for="filter-stage" class="block text-xs font-medium text-gray-600 mb-1">Stage</label>
+          <select id="filter-stage" class="w-full px-3 py-2 border rounded-lg text-sm">
+            <option value="">All stages</option>
+            <option>Application form</option>
+            <option>Online assessment</option>
+            <option>Interview</option>
+            <option>Reference check</option>
+            <option>Job offer stage</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <button id="filter-btn" class="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900">Apply</button>
+        <button id="export-btn" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">
+          <i class="fas fa-download mr-1"></i>Export CSV
+        </button>
+        <button id="logout-btn" class="px-4 py-2 text-sm text-gray-500 hover:text-gray-800">Clear token</button>
       </div>
+
+      <p id="report-count" class="text-sm text-gray-600"></p>
       <div id="reports-list" class="space-y-4"></div>
     </section>
   </div>
@@ -40,6 +64,14 @@
       return document.getElementById('token').value.trim() || localStorage.getItem(TOKEN_KEY) || '';
     }
 
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     function formatDate(iso) {
       try {
         return new Date(iso).toLocaleString('en-NZ');
@@ -48,22 +80,31 @@
       }
     }
 
+    function currentFilters() {
+      const params = new URLSearchParams();
+      const q = document.getElementById('filter-q').value.trim();
+      const stage = document.getElementById('filter-stage').value;
+      if (q) params.set('q', q);
+      if (stage) params.set('stage', stage);
+      return params;
+    }
+
     function renderReport(report) {
       const card = document.createElement('article');
       card.className = 'bg-white rounded-2xl shadow border p-5';
       card.innerHTML = `
         <div class="flex flex-wrap justify-between gap-2 mb-3">
-          <h2 class="font-semibold text-lg">${report.jobTitle}</h2>
-          <span class="text-xs text-gray-500 font-mono">${report.id}</span>
+          <h2 class="font-semibold text-lg">${escapeHtml(report.jobTitle)}</h2>
+          <span class="text-xs text-gray-500 font-mono">${escapeHtml(report.id)}</span>
         </div>
-        <p class="text-sm text-gray-500 mb-4">${formatDate(report.createdAt)} · ${report.stage}${report.company ? ` · ${report.company}` : ''}</p>
+        <p class="text-sm text-gray-500 mb-4">${formatDate(report.createdAt)} · ${escapeHtml(report.stage)}${report.company ? ` · ${escapeHtml(report.company)}` : ''}</p>
         <dl class="grid sm:grid-cols-2 gap-3 text-sm">
-          <div><dt class="font-medium text-gray-700">Description</dt><dd class="text-gray-600 mt-1 whitespace-pre-wrap">${report.description}</dd></div>
-          <div><dt class="font-medium text-gray-700">Issue types</dt><dd class="text-gray-600 mt-1">${(report.issueTypes || []).join(', ') || '—'}</dd></div>
-          <div><dt class="font-medium text-gray-700">Impacts</dt><dd class="text-gray-600 mt-1">${(report.impacts || []).join(', ') || '—'}</dd></div>
-          <div><dt class="font-medium text-gray-700">Accommodations</dt><dd class="text-gray-600 mt-1 whitespace-pre-wrap">${report.accommodations || '—'}</dd></div>
-          <div><dt class="font-medium text-gray-700">Support requested</dt><dd class="text-gray-600 mt-1">${report.supportRequested}</dd></div>
-          <div><dt class="font-medium text-gray-700">Contact</dt><dd class="text-gray-600 mt-1">${report.contactEmail || 'Anonymous'}</dd></div>
+          <div><dt class="font-medium text-gray-700">Description</dt><dd class="text-gray-600 mt-1 whitespace-pre-wrap">${escapeHtml(report.description)}</dd></div>
+          <div><dt class="font-medium text-gray-700">Issue types</dt><dd class="text-gray-600 mt-1">${escapeHtml((report.issueTypes || []).join(', ') || '—')}</dd></div>
+          <div><dt class="font-medium text-gray-700">Impacts</dt><dd class="text-gray-600 mt-1">${escapeHtml((report.impacts || []).join(', ') || '—')}</dd></div>
+          <div><dt class="font-medium text-gray-700">Accommodations</dt><dd class="text-gray-600 mt-1 whitespace-pre-wrap">${escapeHtml(report.accommodations || '—')}</dd></div>
+          <div><dt class="font-medium text-gray-700">Support requested</dt><dd class="text-gray-600 mt-1">${escapeHtml(report.supportRequested)}</dd></div>
+          <div><dt class="font-medium text-gray-700">Contact</dt><dd class="text-gray-600 mt-1">${escapeHtml(report.contactEmail || 'Anonymous')}</dd></div>
         </dl>
       `;
       return card;
@@ -79,7 +120,9 @@
         return;
       }
 
-      const res = await fetch('/api/admin/reports?limit=200', {
+      const params = currentFilters();
+      params.set('limit', '200');
+      const res = await fetch(`/api/admin/reports?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
@@ -92,12 +135,12 @@
       localStorage.setItem(TOKEN_KEY, token);
       document.getElementById('login-panel').classList.add('hidden');
       document.getElementById('reports-panel').classList.remove('hidden');
-      document.getElementById('report-count').textContent = `${data.total} report(s)`;
+      document.getElementById('report-count').textContent = `${data.total} report(s) matching filters`;
 
       const list = document.getElementById('reports-list');
       list.innerHTML = '';
       if (!data.reports.length) {
-        list.innerHTML = '<p class="text-gray-500">No reports yet.</p>';
+        list.innerHTML = '<p class="text-gray-500">No reports match these filters.</p>';
         return;
       }
       for (const report of data.reports) {
@@ -105,7 +148,29 @@
       }
     }
 
+    async function exportCsv() {
+      const token = getToken();
+      if (!token) return;
+      const params = currentFilters();
+      const res = await fetch(`/api/admin/reports/export.csv?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        alert('Export failed. Check your admin token.');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `neurohire-reports-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     document.getElementById('login-btn').addEventListener('click', loadReports);
+    document.getElementById('filter-btn').addEventListener('click', loadReports);
+    document.getElementById('export-btn').addEventListener('click', exportCsv);
     document.getElementById('logout-btn').addEventListener('click', () => {
       localStorage.removeItem(TOKEN_KEY);
       document.getElementById('token').value = '';

@@ -41,6 +41,11 @@
         <h2 class="font-semibold text-lg mb-4">Reported impacts</h2>
         <ul id="by-impact" class="space-y-2 text-sm"></ul>
       </section>
+
+      <section class="bg-white rounded-2xl shadow p-6 border">
+        <h2 class="font-semibold text-lg mb-4">Recent submissions (anonymised)</h2>
+        <ul id="recent" class="space-y-2 text-sm"></ul>
+      </section>
     </div>
     <p id="error" class="hidden text-red-600"></p>
   </div>
@@ -67,6 +72,17 @@
         renderList(document.getElementById('by-stage'), data.byStage, 'No data yet');
         renderList(document.getElementById('by-issue'), data.byIssueType, 'No data yet');
         renderList(document.getElementById('by-impact'), data.byImpact, 'No data yet');
+        const recentEl = document.getElementById('recent');
+        if (!data.recentAnonymous?.length) {
+          recentEl.innerHTML = '<li class="text-gray-400">No data yet</li>';
+        } else {
+          recentEl.innerHTML = data.recentAnonymous.map((item) =>
+            `<li class="flex justify-between gap-4 border-b border-gray-100 py-2">
+              <span>${item.jobTitle} <span class="text-gray-400">(${item.stage})</span></span>
+              <span class="text-gray-500 text-xs">${new Date(item.createdAt).toLocaleDateString('en-NZ')}</span>
+            </li>`
+          ).join('');
+        }
       } catch (err) {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('error').textContent = err.message;

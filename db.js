@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_PATH = path.join(DATA_DIR, 'neurohire.db');
 
 if (!fs.existsSync(DATA_DIR)) {
@@ -94,14 +94,46 @@ function insertReport(report) {
   return report;
 }
 
-function listReports({ limit = 100, offset = 0 } = {}) {
+function listReports({ limit = 100, offset = 0, stage = null, q = null } = {}) {
+  const clauses = [];
+  const params = [];
+
+  if (stage) {
+    clauses.push('stage = ?');
+    params.push(stage);
+  }
+  if (q) {
+    const like = `%${q}%`;
+    clauses.push(
+      '(job_title LIKE ? OR company LIKE ? OR description LIKE ? OR contact_email LIKE ?)'
+    );
+    params.push(like, like, like, like);
+  }
+
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   const rows = db
     .prepare(
-      `SELECT * FROM reports ORDER BY datetime(created_at) DESC LIMIT ? OFFSET ?`
+      `SELECT * FROM reports ${where} ORDER BY datetime(created_at) DESC LIMIT ? OFFSET ?`
     )
-    .all(limit, offset);
-  const total = db.prepare('SELECT COUNT(*) AS count FROM reports').get().count;
+    .all(...params, limit, offset);
+  const total = db
+    .prepare(`SELECT COUNT(*) AS count FROM reports ${where}`)
+    .get(...params).count;
   return { reports: rows.map(rowToReport), total };
+}
+
+function listAllReports({ stage = null, q = null } = {}) {
+  return listReports({ limit: 10000, offset: 0, stage, q });
+}
+
+function getReportById(id) {
+  const row = db.prepare('SELECT * FROM reports WHERE id = ?').get(id);
+  return row ? rowToReport(row) : null;
+}
+
+function pingDb() {
+  db.prepare('SELECT 1').get();
+  return true;
 }
 
 function getPublicStats() {
@@ -154,8 +186,66 @@ function getPublicStats() {
   };
 }
 
+function reportsToCsv(reports) {
+  const headers = [
+    'id',
+    'createdAt',
+    'company',
+    'jobTitle',
+    'stage',
+    'incidentDate',
+    'issueTypes',
+    'description',
+    'accommodations',
+    'impacts',
+    'impactNotes',
+    'supportRequested',
+    'contactEmail',
+  ];
+  const escape = (value) => {
+    const str = value == null ? '' : String(value);
+    if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+  const lines = [headers.join(',')];
+  for (const report of reports) {
+    lines.push(
+      [
+        report.id,
+        report.createdAt,
+        report.company,
+        report.jobTitle,
+        report.stage,
+        report.incidentDate,
+        (report.issueTypes || []).join('; '),
+        report.description,
+        report.accommodations,
+        (report.impacts || []).join('; '),
+        report.impactNotes,
+        report.supportRequested,
+        report.contactEmail,
+      ]
+        .map(escape)
+        .join(',')
+    );
+  }
+  return lines.join('\r\n');
+}
+
 module.exports = {
   insertReport,
   listReports,
+  listAllReports,
+  getReportById,
   getPublicStats,
+  pingDb,
+  reportsToCsv,
+  STAGES: [
+    'Application form',
+    'Online assessment',
+    'Interview',
+    'Reference check',
+    'Job offer stage',
+    'Other',
+  ],
 };

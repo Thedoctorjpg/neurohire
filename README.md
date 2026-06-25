@@ -71,22 +71,33 @@ Submit a report. Rate-limited to 10 requests per 15 minutes per IP.
 
 Valid `stage` values: `Application form`, `Online assessment`, `Interview`, `Reference check`, `Job offer stage`, `Other`.
 
+### `GET /api/reports/:id/status`
+
+Public confirmation that a report was received (no PII). Use the reference id shown after submission.
+
 ### `GET /api/admin/reports`
 
-List all reports. Requires header:
+List reports. Requires header:
 
 ```
 Authorization: Bearer <ADMIN_TOKEN>
 ```
 
-Query params: `limit` (max 500), `offset`.
+Query params: `limit` (max 500), `offset`, `stage`, `q` (search job title, company, description, email).
+
+### `GET /api/admin/reports/export.csv`
+
+Download filtered reports as CSV. Same auth and query params as admin list.
 
 ## Environment
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3853` | HTTP port |
+| `HOST` | `0.0.0.0` | Bind address |
+| `DATA_DIR` | `./data` | SQLite directory (mount a persistent volume here in production) |
 | `ADMIN_TOKEN` | *(empty)* | Enables admin API; required for `/admin.html` |
+| `NOTIFY_WEBHOOK_URL` | *(empty)* | Optional POST webhook on new report (Slack, Discord, etc.) |
 
 ## Project structure
 
@@ -94,11 +105,16 @@ Query params: `limit` (max 500), `offset`.
 neurohire/
 ├── server.js          # Express app & API routes
 ├── db.js              # SQLite schema & queries
+├── Dockerfile         # Container image (Railway / Fly / VPS)
+├── render.yaml        # Render blueprint
+├── fly.toml           # Fly.io config + volume mount
+├── railway.toml       # Railway deploy config
 ├── public/
 │   ├── index.html     # 4-step report form
 │   ├── app.js         # Form logic
 │   ├── stats.html     # Public aggregate dashboard
-│   └── admin.html     # Admin report viewer
+│   └── admin.html     # Admin search + CSV export
+├── test/api.test.js   # API smoke tests
 ├── data/              # SQLite DB (created at runtime, gitignored)
 ├── package.json
 ├── .env.example
@@ -115,11 +131,43 @@ neurohire/
 
 ## Deployment
 
-Run on any Node host (Railway, Render, Fly.io, VPS):
+Configs are included for **Render** (`render.yaml`), **Railway** (`railway.toml` + `Dockerfile`), and **Fly.io** (`fly.toml`). All use a persistent `DATA_DIR` mount so SQLite survives restarts.
 
-1. Set `PORT` and `ADMIN_TOKEN` in the host environment.
-2. `npm install && npm start`
-3. Put HTTPS in front (reverse proxy or platform TLS).
+### Render (recommended — free tier + disk)
+
+1. Open [Deploy to Render](https://render.com/deploy?repo=https://github.com/Thedoctorjpg/neurohire) or connect the GitHub repo and apply the `render.yaml` blueprint.
+2. Render auto-generates `ADMIN_TOKEN`; copy it from the dashboard for `/admin.html`.
+3. Health check: `/api/health`
+
+### Railway
+
+```bash
+npx @railway/cli login
+npx @railway/cli link
+npx @railway/cli up
+npx @railway/cli variables set ADMIN_TOKEN=<long-random-secret>
+```
+
+Mount a volume at `/data` and set `DATA_DIR=/data`.
+
+### Fly.io
+
+```bash
+fly auth login
+fly launch --copy-config
+fly volumes create neurohire_data --region syd --size 1
+fly secrets set ADMIN_TOKEN=$(openssl rand -hex 32)
+fly deploy
+```
+
+### Local / VPS
+
+```bash
+npm install
+cp .env.example .env   # set ADMIN_TOKEN
+npm start
+npm test               # API smoke tests
+```
 
 GitHub Pages **cannot** run this stack — it only serves static files. Use a Node host for the full app.
 
