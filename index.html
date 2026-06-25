@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroHire Report — Safe Reporting for Neurodiverse &amp; Disabled Jobseekers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    .step-active { background-color: #2563eb; color: white; }
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+    .dialog { animation: dialogPop 0.3s ease; }
+    @keyframes dialogPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    button { touch-action: manipulation; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-3xl mx-auto bg-white shadow-xl min-h-screen">
+    <div class="bg-blue-600 text-white p-6">
+      <h1 class="text-3xl font-bold flex items-center gap-3">
+        <i class="fas fa-brain" aria-hidden="true"></i> NeuroHire Report
+      </h1>
+      <p class="mt-2 text-blue-100">Safe, anonymous reporting for neurodiverse and disabled jobseekers in New Zealand</p>
+    </div>
+
+    <div class="px-6 py-4 bg-gray-50 border-b">
+      <div class="w-full bg-gray-200 rounded-full h-2.5">
+        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 25%"></div>
+      </div>
+    </div>
+
+    <div role="tablist" aria-label="Form steps" class="px-6 py-4 border-b bg-gray-50 flex gap-2 overflow-x-auto">
+      <button type="button" onclick="goToStep(1)" id="step-btn-1" role="tab" aria-selected="true" class="step-active px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap">1. Opportunity</button>
+      <button type="button" onclick="goToStep(2)" id="step-btn-2" role="tab" aria-selected="false" class="px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-200 text-gray-700">2. What Happened</button>
+      <button type="button" onclick="goToStep(3)" id="step-btn-3" role="tab" aria-selected="false" class="px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-200 text-gray-700">3. Impact</button>
+      <button type="button" onclick="goToStep(4)" id="step-btn-4" role="tab" aria-selected="false" class="px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-gray-200 text-gray-700">4. Submit</button>
+    </div>
+
+    <form id="neurohire-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <div class="p-6">
+        <div id="step-1" class="step-content active">
+          <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
+            <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+            About the opportunity
+          </h2>
+          <div class="space-y-6">
+            <div>
+              <label for="company" class="block text-sm font-medium mb-1">Company name <span class="text-gray-400">(optional)</span></label>
+              <input type="text" id="company" name="company" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g. TechCorp NZ">
+            </div>
+            <div>
+              <label for="jobtitle" class="block text-sm font-medium mb-1">Job title <span class="text-red-500">*</span></label>
+              <input type="text" id="jobtitle" name="jobtitle" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g. Software Engineer">
+            </div>
+            <fieldset>
+              <legend class="block text-sm font-medium mb-2">What stage was the discrimination?</legend>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="radio" name="stage" value="Application form" class="w-4 h-4" required><span>Application form</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="radio" name="stage" value="Online assessment" class="w-4 h-4"><span>Online assessment</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="radio" name="stage" value="Interview" class="w-4 h-4"><span>Interview (video/phone/in-person)</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="radio" name="stage" value="Reference check" class="w-4 h-4"><span>Reference check</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="radio" name="stage" value="Job offer stage" class="w-4 h-4"><span>Job offer stage</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="radio" name="stage" value="Other" class="w-4 h-4"><span>Other</span></label>
+              </div>
+            </fieldset>
+            <div>
+              <label for="date" class="block text-sm font-medium mb-1">When did this happen?</label>
+              <input type="date" id="date" name="date" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <button type="button" onclick="goToStep(2)" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition">Next: What happened →</button>
+          </div>
+        </div>
+
+        <div id="step-2" class="step-content">
+          <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
+            <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+            What happened
+          </h2>
+          <div class="space-y-6">
+            <fieldset>
+              <legend class="block text-sm font-medium mb-2">What type of barrier or discrimination did you experience?</legend>
+              <div class="grid grid-cols-1 gap-3">
+                <label class="flex items-start gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="issue_type" value="Inaccessible application or assessment" class="w-4 h-4 mt-1"><span>Inaccessible application or assessment (format, timing, platform)</span></label>
+                <label class="flex items-start gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="issue_type" value="Accommodation request ignored or refused" class="w-4 h-4 mt-1"><span>Accommodation request ignored or refused</span></label>
+                <label class="flex items-start gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="issue_type" value="Discriminatory questions or comments" class="w-4 h-4 mt-1"><span>Discriminatory questions or comments</span></label>
+                <label class="flex items-start gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="issue_type" value="Stereotyping or assumptions about disability/neurodiversity" class="w-4 h-4 mt-1"><span>Stereotyping or assumptions about disability/neurodiversity</span></label>
+                <label class="flex items-start gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="issue_type" value="Process changed without notice" class="w-4 h-4 mt-1"><span>Process changed without reasonable notice</span></label>
+                <label class="flex items-start gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="issue_type" value="Other" class="w-4 h-4 mt-1"><span>Other</span></label>
+              </div>
+            </fieldset>
+            <div>
+              <label for="description" class="block text-sm font-medium mb-1">Describe what happened <span class="text-red-500">*</span></label>
+              <textarea id="description" name="description" required rows="6" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="What was said or done? What made the process inaccessible or unfair?"></textarea>
+            </div>
+            <div>
+              <label for="accommodations" class="block text-sm font-medium mb-1">Did you request accommodations? If yes, what happened?</label>
+              <textarea id="accommodations" name="accommodations" rows="3" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g. extra time, plain-language instructions, interview format change"></textarea>
+            </div>
+            <div class="flex gap-3">
+              <button type="button" onclick="goToStep(1)" class="flex-1 border border-gray-300 text-gray-700 py-4 rounded-xl font-bold hover:bg-gray-50 transition">← Back</button>
+              <button type="button" onclick="goToStep(3)" class="flex-[2] bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition">Next: Impact →</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="step-3" class="step-content">
+          <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
+            <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+            Impact
+          </h2>
+          <div class="space-y-6">
+            <fieldset>
+              <legend class="block text-sm font-medium mb-2">How did this affect you?</legend>
+              <div class="grid grid-cols-1 gap-3">
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="impact" value="Increased anxiety or distress" class="w-4 h-4"><span>Increased anxiety or distress</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="impact" value="Withdrew from application" class="w-4 h-4"><span>Withdrew from the application or process</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="impact" value="Lost income or opportunity" class="w-4 h-4"><span>Lost income or opportunity</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="impact" value="Reduced confidence job searching" class="w-4 h-4"><span>Reduced confidence in job searching</span></label>
+                <label class="flex items-center gap-2 border p-4 rounded-xl cursor-pointer hover:bg-gray-50"><input type="checkbox" name="impact" value="Needed additional support" class="w-4 h-4"><span>Needed additional health or peer support</span></label>
+              </div>
+            </fieldset>
+            <div>
+              <label for="impact_notes" class="block text-sm font-medium mb-1">Anything else about the impact?</label>
+              <textarea id="impact_notes" name="impact_notes" rows="4" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Optional — financial, health, family, or other effects"></textarea>
+            </div>
+            <div>
+              <label for="support_requested" class="block text-sm font-medium mb-1">Would you like information about NZ support options?</label>
+              <select id="support_requested" name="support_requested" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="No">No thanks</option>
+                <option value="Yes — general resources">Yes — general resources</option>
+                <option value="Yes — someone to contact me">Yes — someone to contact me (requires email below)</option>
+              </select>
+            </div>
+            <div class="flex gap-3">
+              <button type="button" onclick="goToStep(2)" class="flex-1 border border-gray-300 text-gray-700 py-4 rounded-xl font-bold hover:bg-gray-50 transition">← Back</button>
+              <button type="button" onclick="goToStep(4)" class="flex-[2] bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition">Next: Review &amp; submit →</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="step-4" class="step-content">
+          <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
+            <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">4</span>
+            Review &amp; submit
+          </h2>
+          <div class="space-y-6">
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-900">
+              <p class="font-semibold mb-1"><i class="fas fa-shield-halved mr-2" aria-hidden="true"></i>Your privacy</p>
+              <p>Reports are submitted anonymously unless you choose to add a contact email. Do not include names of third parties if you prefer not to.</p>
+            </div>
+            <div id="review-summary" class="bg-gray-50 border rounded-xl p-4 text-sm space-y-2"></div>
+            <div>
+              <label for="contact_email" class="block text-sm font-medium mb-1">Contact email <span class="text-gray-400">(optional)</span></label>
+              <input type="email" id="contact_email" name="contact_email" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Only if you want a follow-up">
+            </div>
+            <label class="flex items-start gap-3 border p-4 rounded-xl cursor-pointer">
+              <input type="checkbox" id="consent" name="consent" required class="w-4 h-4 mt-1">
+              <span class="text-sm">I understand this report may be used in aggregate to advocate for fairer hiring practices. I confirm the information I have provided is accurate to the best of my knowledge.</span>
+            </label>
+            <div class="flex gap-3">
+              <button type="button" onclick="goToStep(3)" class="flex-1 border border-gray-300 text-gray-700 py-4 rounded-xl font-bold hover:bg-gray-50 transition">← Back</button>
+              <button type="submit" id="submit-btn" class="flex-[2] bg-green-600 text-white py-4 rounded-xl font-bold hover:bg-green-700 transition disabled:opacity-50" disabled>Submit report</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div id="success-dialog" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="success-title">
+    <div class="dialog bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+      <div class="text-green-600 text-5xl mb-4"><i class="fas fa-circle-check" aria-hidden="true"></i></div>
+      <h3 id="success-title" class="text-2xl font-bold mb-2">Report submitted</h3>
+      <p class="text-gray-600 mb-6">Thank you. Your report helps build evidence for fairer, more accessible hiring in New Zealand.</p>
+      <button type="button" onclick="location.reload()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700">Submit another report</button>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL_STEPS = 4;
+    let currentStep = 1;
+
+    function goToStep(step) {
+      if (step > currentStep + 1) return;
+      if (step === 2 && !validateStep1()) return;
+      if (step === 3 && !validateStep2()) return;
+      if (step === 4) {
+        if (!validateStep2()) { goToStep(2); return; }
+        renderReview();
+      }
+      currentStep = step;
+      document.querySelectorAll('.step-content').forEach((el, i) => {
+        el.classList.toggle('active', i + 1 === step);
+      });
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        const btn = document.getElementById('step-btn-' + i);
+        const active = i === step;
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        btn.classList.toggle('step-active', active);
+        btn.classList.toggle('bg-gray-200', !active);
+        btn.classList.toggle('text-gray-700', !active);
+      }
+      document.getElementById('progress-bar').style.width = (step / TOTAL_STEPS * 100) + '%';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep1() {
+      const jobtitle = document.getElementById('jobtitle');
+      const stage = document.querySelector('input[name="stage"]:checked');
+      if (!jobtitle.value.trim()) {
+        alert('Please enter a job title.');
+        jobtitle.focus();
+        return false;
+      }
+      if (!stage) {
+        alert('Please select the stage where discrimination occurred.');
+        return false;
+      }
+      return true;
+    }
+
+    function validateStep2() {
+      const description = document.getElementById('description');
+      if (!description.value.trim()) {
+        alert('Please describe what happened.');
+        description.focus();
+        return false;
+      }
+      return true;
+    }
+
+    function checkedValues(name) {
+      return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked')).map(el => el.value);
+    }
+
+    function fieldValue(id) {
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : '';
+    }
+
+    function renderReview() {
+      const stage = document.querySelector('input[name="stage"]:checked');
+      const lines = [
+        ['Job title', fieldValue('jobtitle')],
+        ['Company', fieldValue('company') || 'Not provided'],
+        ['Stage', stage ? stage.value : '—'],
+        ['Date', fieldValue('date') || 'Not provided'],
+        ['Issue types', checkedValues('issue_type').join(', ') || 'Not specified'],
+        ['What happened', fieldValue('description')],
+        ['Accommodations', fieldValue('accommodations') || 'Not provided'],
+        ['Impact', checkedValues('impact').join(', ') || 'Not specified'],
+        ['Impact notes', fieldValue('impact_notes') || 'Not provided'],
+        ['Support requested', fieldValue('support_requested')],
+        ['Contact email', fieldValue('contact_email') || 'Anonymous submission'],
+      ];
+      document.getElementById('review-summary').innerHTML = lines.map(([k, v]) =>
+        '<div><span class="font-semibold text-gray-700">' + k + ':</span> <span class="text-gray-600">' + escapeHtml(v).replace(/\n/g, '<br>') + '</span></div>'
+      ).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    document.getElementById('consent').addEventListener('change', function () {
+      document.getElementById('submit-btn').disabled = !this.checked;
+    });
+
+    document.getElementById('neurohire-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!document.getElementById('consent').checked) return;
+      const form = e.target;
+      const endpoint = form.action;
+      if (endpoint.includes('YOUR_FORM_ID')) {
+        alert('Replace YOUR_FORM_ID in the form action with your Formspree form ID before going live.');
+        return;
+      }
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+      const data = new FormData(form);
+      data.append('issue_types', checkedValues('issue_type').join('; '));
+      data.append('impacts', checkedValues('impact').join('; '));
+      try {
+        const res = await fetch(endpoint, { method: 'POST', body: data, headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error('Submission failed');
+        document.getElementById('success-dialog').classList.remove('hidden');
+      } catch (err) {
+        alert('Something went wrong submitting your report. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit report';
+      }
+    });
+  </script>
+</body>
+</html>
